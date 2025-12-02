@@ -3,13 +3,15 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN as _IMAGENET_DEFAULT_MEAN
 from timm.data.constants import IMAGENET_DEFAULT_STD as _IMAGENET_DEFAULT_STD
 import torchvision.transforms.functional as _F
 
+
+# python run.py -c configs/ImageNet100/WaveletCenterNet_T2.py -m train
 # =========> shared <=================================
 seed = 42
-size = 192
+size = 256
 epoch_full = 100
 warmup_epochs = 5
 test_start_epoch = 60
-batch_size = 512
+batch_size = 256
 lr = 1.5e-3
 min_lr = 0.5e-5
 warmup_lr = 0.5e-6
@@ -26,7 +28,7 @@ if ft:
 # =========> dataset <=================================
 data = _Namespace()
 data.type = 'DefaultCLS'
-data.root = '/Data_8TB/lht/data/ImageNet-100'
+data.root = 'D:/ImageNet/ImageNet100'
 data.loader_type = 'pil'
 data.sampler = 'naive'
 data.nb_classes = nb_classes
@@ -45,8 +47,8 @@ data.test_transforms = [
 
 # =========> model <=================================
 model = _Namespace()
-model.name = 'StarNet_MHSA_T2_DTW'
-model.model_kwargs = dict(pretrained=False, checkpoint_path='', ema=False, strict=True, num_classes=data.nb_classes)
+model.name = 'WaveletCenterNet_T2'
+model.model_kwargs = dict(pretrained=True, checkpoint_path=r'runs\imageNet100\WaveletCenterNet\WaveletCenterNet_T2\CLSTrainer_WaveletCenterNet_T2_DefaultCLS_20251201-222814\net_E.pth', ema=False, strict=True, num_classes=data.nb_classes)
 
 # =========> optimizer <=================================
 optim = _Namespace()
@@ -55,7 +57,7 @@ optim.optim_kwargs = dict(name='adamw', betas=(0.9, 0.999), eps=1e-8, weight_dec
 # =========> trainer <=================================
 trainer = _Namespace()
 trainer.name = 'CLSTrainer'
-trainer.checkpoint = 'runs/imageNet100/starnet/StarAttn_new_t2_mhsa_dwt'
+trainer.checkpoint = 'runs/imageNet100/WaveletCenterNet/WaveletCenterNet_T2'
 trainer.resume_dir = ''
 trainer.cuda_deterministic = False
 trainer.epoch_full = epoch_full

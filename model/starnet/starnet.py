@@ -395,11 +395,11 @@ CFG_StarAttn_T8 = {
         'img_size': 224,
         'dims': [56,112,224,448],
         'depth': [2,2,4,5],
-        'drop_path_rate': 0.03,
+        'drop_path_rate': 0.,
         'mlp_ratio': 2,
         "act_layer": "GELU",
         "learnable_wavelet": True,
-        "down_sample": 32
+        "down_sample": 64
     }
 
 CFG_StarAttn_T2_64 = {
@@ -421,7 +421,7 @@ CFG_StarAttn_T4_64 = {
         'mlp_ratio': 2,
         "act_layer": "GELU",
         "learnable_wavelet": True,
-        "down_sample": 64
+        "down_sample": 642
     }
 
 
@@ -437,16 +437,16 @@ CFG_StarAttn_T4_64 = {
 #     }
 
 
-CFG_StarAttn_T6_64 = {
-        'img_size': 224,
-        'dims': [96,192,384,768],
-        'depth': [1,2,8,2],
-        'drop_path_rate': 0,
-        'mlp_ratio': 2,
-        "act_layer": "GELU",
-        "learnable_wavelet": True,
-        "down_sample": 64
-    }
+# CFG_StarAttn_T6_64 = {
+#         'img_size': 224,
+#         'dims': [96,192,384,768],
+#         'depth': [1,2,8,2],
+#         'drop_path_rate': 0,
+#         'mlp_ratio': 2,
+#         "act_layer": "GELU",
+#         "learnable_wavelet": True,
+#         "down_sample": 64
+#     }
 
 
 @MODEL.register_module
@@ -454,42 +454,42 @@ def StarNet_MHSA_T2_DTW(num_classes=1000, pretrained=False, distillation=False, 
     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 def StarNet_MHSA_T4_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4):
     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 def StarNet_MHSA_T6_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T6):
     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 def StarNet_MHSA_T8_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T8):
     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
-def StarNet_MHSA_T2_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2_64):
-    model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
-    return model
+# #@MODEL.register_module
+# def StarNet_MHSA_T2_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2_64):
+#     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
+#     return model
 
-#@MODEL.register_module
-def StarNet_MHSA_T4_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4_64):
-    model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
-    return model
+# #@MODEL.register_module
+# def StarNet_MHSA_T4_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4_64):
+#     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
+#     return model
 
-#@MODEL.register_module
-def StarNet_MHSA_T6_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T6_64):
-    model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
-    return model
+# #@MODEL.register_module
+# def StarNet_MHSA_T6_64_DTW(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T6_64):
+#     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
+#     return model
 
 
-#@MODEL.register_module
-def StarNet_MHSA_T2_64_DTW_Pre(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2_64):
-    model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
-    weight = torch.load('model_weights/mobilemamba_t2/ckpt_300.pth')
-    return model
+# #@MODEL.register_module
+# def StarNet_MHSA_T2_64_DTW_Pre(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2_64):
+#     model = StarNet_MHSA(num_classes=num_classes, distillation=distillation, **model_cfg)
+#     weight = torch.load('model_weights/mobilemamba_t2/ckpt_300.pth')
+#     return model
 
 if __name__ == "__main__":
     from thop import profile
@@ -509,10 +509,10 @@ if __name__ == "__main__":
     # print(y.shape)
     # print("Model and input are on GPU:", next(model.parameters()).is_cuda)
     # model = StarNet_MHSA(dims=[40,80,160,320], depth=[3, 3, 12, 5], learnable_wavelet=True)
-    model = StarNet_MHSA_T2_64_DTW()
+    model = StarNet_MHSA_T8_DTW()
     model.eval()
     model.to("cuda")
-    x = torch.randn(1, 3,256,256).to("cuda")
+    x = torch.randn(1, 3,256, 256).to("cuda")
     # y = model(x)
     # print(y.shape)
 

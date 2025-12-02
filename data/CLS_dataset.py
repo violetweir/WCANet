@@ -24,7 +24,7 @@ class DefaultCLS(datasets.folder.DatasetFolder):  # ImageNet
 		root = '{}/{}'.format(cfg.data.root, 'train' if train else 'val')
 		img_loader = get_img_loader(cfg.data.loader_type)
 		super(DefaultCLS, self).__init__(root=root, loader=img_loader, extensions=IMG_EXTENSIONS, transform=transform, target_transform=target_transform)
-		self.cfg = cfg
+		#self.cfg = cfg
 		self.train = train
 		# scale_kwargs = cfg.trainer.scale_kwargs
 		# if scale_kwargs is not None and scale_kwargs['n_scale'] > 0:
@@ -110,14 +110,15 @@ class IN22KDataset(data.Dataset):
 		self.root = cfg.data.root
 		self.loader = get_img_loader(cfg.data.loader_type)
 		self.ann_path = f"{self.root}/ILSVRC2011fall_whole_map_{'train' if train else 'val'}.txt"
-		self.cfg = cfg
+		# self.cfg = cfg
 		self.train = train
 		self.transform = transform
 		self.target_transform = target_transform
 		# id & label: https://github.com/google-research/big_transfer/issues/7
 		# total: 21843; only 21841 class have images: map 21841->9205; 21842->15027
 		self.nb_classes = cfg.data.nb_classes
-		self.data_all = json.load(open(self.ann_path))
+		with open(self.ann_path, 'r') as f:
+			self.data_all = json.load(f)
 		self.length = len(self.data_all)
 
 	def __len__(self):

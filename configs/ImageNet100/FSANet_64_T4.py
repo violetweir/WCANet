@@ -9,7 +9,7 @@ size = 256
 epoch_full = 100
 warmup_epochs = 5
 test_start_epoch = 60
-batch_size = 512
+batch_size = 256
 lr = 1.5e-3
 min_lr = 0.5e-5
 warmup_lr = 0.5e-6
@@ -26,7 +26,7 @@ if ft:
 # =========> dataset <=================================
 data = _Namespace()
 data.type = 'DefaultCLS'
-data.root = '/Data_8TB/lht/data/ImageNet-100'
+data.root = 'D:/ImageNet/ImageNet100'
 data.loader_type = 'pil'
 data.sampler = 'naive'
 data.nb_classes = nb_classes
@@ -55,7 +55,7 @@ optim.optim_kwargs = dict(name='adamw', betas=(0.9, 0.999), eps=1e-8, weight_dec
 # =========> trainer <=================================
 trainer = _Namespace()
 trainer.name = 'CLSTrainer'
-trainer.checkpoint = 'runs/imageNet100/starnet/StarAttn_new_t2_mhsa_dwt'
+trainer.checkpoint = 'runs/imageNet100/starnet/FSANet64_T4'
 trainer.resume_dir = ''
 trainer.cuda_deterministic = False
 trainer.epoch_full = epoch_full

@@ -68,60 +68,113 @@ def compute_throughput_cuda(name, model, device, batch_size, resolution=224):
     print(name, device, batch_size / timing.mean().item(),
           'images/s @ batch size', batch_size)
 
-for device in ['cuda:0']:
+if __name__ == "__main__":
+    for device in ["cuda:0",'cpu']:
 
-    if 'cuda' in device and not torch.cuda.is_available():
-        print("no cuda")
-        continue
-
-    if device == 'cpu':
-        os.system('echo -n "nb processors "; '
-                  'cat /proc/cpuinfo | grep ^processor | wc -l; '
-                  'cat /proc/cpuinfo | grep ^"model name" | tail -1')
-        print('Using 1 cpu thread')
-        torch.set_num_threads(1)
-        compute_throughput = compute_throughput_cpu
-    else:
-        print(torch.cuda.get_device_name(torch.cuda.current_device()))
-        compute_throughput = compute_throughput_cuda
-
-    for n, batch_size0, resolution in [
-        ('MobileMamba_T2', 2048, 192),
-        # ("MobileMamba_T4", 2048, 192),
-        ('FSANet_T2',2048,192),
-        # ('FSANet_64_T4_192',2048,192),
-        # ("StarNet_MHSA_T2_DTW", 2048, 192),
-        # ("FSANet_T2", 2048, 192),
-        ("FSANet_64_T4",2048,256),
-        # ('StarNet_MHSA_T4_DTW',2048,192),
-        # ("StarNet_MHSA_T6_64_DTW",2048,192)
-        # ("StarNet_T2_NEW_CONV", 1024, 192),
-        # ('StarNet_T4_down64',2048,224),  # change to
-        # ('StarNet_t2_down64',2048,224),
-        # ("StarNet_T4_NEW_CONV",512, 192),
-        # ('StarNet_t2_down64',1024,224),
-        # ('StarNet_T4_down64',512,224),
-        # ("StarNet_T4_NEW_CONV_224_MLP1", 2048, 224),
-        # ("StarNet_T4_NEW_CONV_MDEPTH", 2048, 224),
-        # ("StarNet_T4_NEW_CONV_224", 2048, 224),
-    ]:
+        if 'cuda' in device and not torch.cuda.is_available():
+            print("no cuda")
+            continue
 
         if device == 'cpu':
-            batch_size = 16
+            os.system('echo -n "nb processors "; '
+                    'cat /proc/cpuinfo | grep ^processor | wc -l; '
+                    'cat /proc/cpuinfo | grep ^"model name" | tail -1')
+            print('Using 1 cpu thread')
+            torch.set_num_threads(1)
+            compute_throughput = compute_throughput_cpu
         else:
-            batch_size = batch_size0
-            torch.cuda.empty_cache()
-        inputs = torch.randn(batch_size, 3, resolution,
-                             resolution, device=device)
-        model = _Namespace()
-        model.name = n
-        model.model_kwargs = dict(pretrained=False, checkpoint_path='', ema=False, strict=True, num_classes=1000)
-        model = get_model(model)
-        model = fuse_model(model)
-        model.to(device)
-        # model.half()
-        model.eval()
+            print(torch.cuda.get_device_name(torch.cuda.current_device()))
+            compute_throughput = compute_throughput_cuda
+        
+        for n, batch_size0, resolution in [
+            # ("EfficientViT_M0",1024,256),
+            # ('FSANet_64_T1',512,256),
+            ("WTViT_M0",1024,256),
+            # ('MobileMamba_T2', 2048, 192),
+            # ("MobileMamba_T4", 2048, 192),
+            # ('FasterNet_T0',512,224),
+            # ('FasterNet_T1',512,224),
+            # ('FasterNet_T2',512,224),
+            # ('FasterNet_T2',512,224),
+            # ("FSANet_64_T6",512,256),
+            # ("FSANet_64_T5",512,256),
+            # ("FSANet_64_T6",512,256),
+            # ("FSANet_64_T8",512,320),
+            # ("EfficientViT_M0",512,224),
+            # ("EfficientViT_M1",512,224),
+            # ("EfficientViT_M2",512,224),
+            # ("EfficientViT_M3",512,224),
+            # ("EfficientViT_M4",512,224),
+            # ("EfficientViT_M5",512,224),
 
-        model = torch.jit.trace(model, inputs)
-        compute_throughput(n, model, device,
-                           batch_size, resolution=resolution)
+            # ('FSANet_64_T1',512,256),
+            # ('FSANet_64_T2',512,256),
+            # ('FSANet_64_T2d5',512,256),
+            # ('FSANet_64_T3',512,256),
+            # ('FSANet_64_T4',512,256),
+            # ('FSANet_64_T5',512,256),
+            # ('FSANet_64_T6',512,256),
+            # ('FSANet_64_T4',512,256),
+            # ('StarNet_MHSA_T2_DTW',512,192),
+            # ('FSANet_64_T5',512,256),
+            # ("StarNet_MHSA_T4_DTW",512,192),
+
+
+
+            # ("starnet_s1", 1024, 224),
+            # ("starnet_s2", 1024, 224),
+            # ("starnet_s3", 1024, 224),
+            # ("starnet_s4", 1024, 224),
+            # ("FSANet_64_T1",512,192),
+            # ("EfficientViT_M0",512,224),
+            # ('mobilenetv4_conv_small_035',512,224),
+            # ("FSANet_64_T8",512,256),
+            # ("FSANet_64_T8_ATTN",512,256),
+            # ('StarNet_MHSA_T2_DTW',512,192),
+            # ("StarNet_MHSA_T4_DTW",512,192),
+            # ("StarNet_MHSA_T6_DTW",512,192),
+            # ('FSANet_64_T2d5',512,256),
+            # ('FSANet_64_T2d5_2',512,256),
+            # ('FSANet_64_T4',512,256),
+            # ('FSANet_64_T5',512,256),
+            ('FSANet_64_T8',512,256),
+            # ("FSANet_64_T2",512,256),
+            # ("FSANet_64_T3",512,256),
+            # ("FSANet_64_T4",512,256),
+            # ("FSANet_64_T5",512,256),
+            # ('FasterNet_T0',512,224),
+            # ("FSANet_64_T1",512,256),
+            # ("EfficientViT_M0",512,256),
+            # ("FSANet_64_T4",512,256),
+            # ("EfficientViT_M4",512,224),
+            # ("FSANet_64_T5",512,256),
+            # ("EfficientViT_M5",512,224),
+            # ("FSANet_64_T6",512,320),
+            # ("StarNet_MHSA_T8_DTW",1024,256)
+            # ("FSANet_64_T6",512,256),
+            
+            # ('StarNet_MHSA_T6_DTW',512,192),
+        
+        ]:
+
+            if device == 'cpu':
+                batch_size = 16
+            else:
+                batch_size = batch_size0
+                torch.cuda.empty_cache()
+            inputs = torch.randn(batch_size, 3, resolution,
+                                resolution, device=device)
+            torch.cuda.empty_cache()
+            model = _Namespace()
+            torchvision.models.mobilenet_v3_large(pretrained=False)
+            model.name = n
+            model.model_kwargs = dict(pretrained=False, checkpoint_path='', ema=False, strict=True, num_classes=1000)
+            model = get_model(model)
+            model = fuse_model(model)
+            model.to(device)
+            # model.half()
+            model.eval()
+
+            model = torch.jit.trace(model, inputs)
+            compute_throughput(n, model, device,
+                            batch_size, resolution=resolution)

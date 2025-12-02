@@ -88,4 +88,8 @@ def get_model(cfg_model):
 
 files = glob.glob('model/[!_]*.py')
 for file in files:
-	model_lib = importlib.import_module(file.split('.')[0].replace('/', '.'))
+	if "\\" in file:
+		model_lib = importlib.import_module(file.split('.')[0].replace('\\', '.'))
+	else:
+		model_lib = importlib.import_module(file.split('.')[0].replace('/', '.'))
+

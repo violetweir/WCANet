@@ -144,7 +144,6 @@ def create_wavelet_filter(wave, in_size, out_size, type=torch.float):
                                rec_lo.unsqueeze(0) * rec_hi.unsqueeze(1),
                                rec_hi.unsqueeze(0) * rec_lo.unsqueeze(1),
                                rec_hi.unsqueeze(0) * rec_hi.unsqueeze(1)], dim=0)
-
     rec_filters = rec_filters[:, None].repeat(out_size, 1, 1, 1)
 
     return dec_filters, rec_filters
@@ -173,10 +172,10 @@ def create_learnable_wavelet_filter (in_size, out_size, filter_size=2, type=torc
     rec_hi = torch.randn(filter_size, dtype=type, device="cuda") * 0.1
     
     # 将参数注册为可学习参数
-    dec_lo = torch.nn.Parameter(dec_lo)
-    dec_hi = torch.nn.Parameter(dec_hi)
-    rec_lo = torch.nn.Parameter(rec_lo)
-    rec_hi = torch.nn.Parameter(rec_hi)
+    # dec_lo = torch.nn.Parameter(dec_lo)
+    # dec_hi = torch.nn.Parameter(dec_hi)
+    # rec_lo = torch.nn.Parameter(rec_lo)
+    # rec_hi = torch.nn.Parameter(rec_hi)
     
     # 构建滤波器组
     dec_filters = torch.stack([dec_lo.unsqueeze(0) * dec_lo.unsqueeze(1),
@@ -185,7 +184,6 @@ def create_learnable_wavelet_filter (in_size, out_size, filter_size=2, type=torc
                                dec_hi.unsqueeze(0) * dec_hi.unsqueeze(1)], dim=0)
 
     dec_filters = dec_filters[:, None].repeat(in_size, 1, 1, 1)
-
     rec_filters = torch.stack([rec_lo.unsqueeze(0) * rec_lo.unsqueeze(1),
                                rec_lo.unsqueeze(0) * rec_hi.unsqueeze(1),
                                rec_hi.unsqueeze(0) * rec_lo.unsqueeze(1),
@@ -241,14 +239,8 @@ class WTAttn(nn.Module):
             self.ll_conv = nn.Conv2d(dim, dim, kernel_size=5, padding=2, groups=dim)
         else :
             self.ll_conv = nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim)
-        # self.attn_weight_linear = Conv2d_BN(dim,dim,ks=1)
-        # self.attn_linear = Conv2d_BN(dim,dim,ks=1)
+
         self.act = nn.Hardsigmoid() # 或者使用 nn.Sigmoid()
-
-        # self.c_act = nn.Hardsigmoid()
-        # self.act = EffectiveSELayer(dim)
-        # self.ese = EffectiveSELayer(dim)
-
     
 
     
@@ -258,16 +250,20 @@ class WTAttn(nn.Module):
         x_wt = self.wt_function(x)
         ll, lh, hl, hh = x_wt[:, :, 0, :, :], x_wt[:, :, 1, :, :], x_wt[:, :, 2, :, :], x_wt[:, :, 3, :, :]
 
-        
+
+     
         # Apply convolutions
         lh_conv = self.lh_conv(lh)
         hl_conv = self.hl_conv(hl)
         ll_conv = self.ll_conv(ll)
+        # lh_conv = lh
+        # hl_conv = hl
+        # ll_conv = ll
         
         # Combine results
-        # attn = self.ese(self.attn_linear(self.attn_weight_linear(self.act(lh_conv * hl_conv) * ll_conv))+ll)
         attn = (self.act((lh_conv * hl_conv )) * ll_conv )+ ll
         wt_map = torch.cat([attn.unsqueeze(2), lh_conv.unsqueeze(2), hl_conv.unsqueeze(2), hh.unsqueeze(2)], dim=2)
+
         output = self.iwt_function(wt_map)
 
         return output
@@ -332,6 +328,11 @@ class FSANet(nn.Module):
                             Conv2d_BN(dims[0] // 8, dims[0] // 4, 3, 2, 1), torch.nn.GELU(),
                             Conv2d_BN(dims[0] // 4, dims[0] // 2, 3, 2, 1), torch.nn.GELU(),
                             Conv2d_BN(dims[0] // 2, dims[0], 3, 2, 1)
+                           )
+        elif down_sample == 642:
+            self.patch_embed = torch.nn.Sequential(Conv2d_BN(in_chans, dims[0] // 4, 3, 2, 1), torch.nn.GELU(),
+                            Conv2d_BN(dims[0] // 4, dims[0] // 2, 3, 2, 1), torch.nn.GELU(),
+                            Conv2d_BN(dims[0] // 2, dims[0] // 1, 3, 2, 1)
                            )
         self.blocks1 = nn.Sequential()
         self.blocks2 = nn.Sequential()
@@ -407,8 +408,19 @@ CFG_StarAttn_T8 = {
 
 CFG_StarAttn_T1_64 = {
         'img_size': 192,
-        'dims': [36,72,144,288],
-        'depth': [0,1,2,2],
+        'dims': [64,128,256],
+        'depth': [2,3,2],
+        'drop_path_rate': 0,
+        'mlp_ratio': 2,
+        "act_layer": "GELU",
+        "learnable_wavelet": True,
+        "down_sample": 64 
+    }
+
+CFG_StarAttn_T2_64 = {
+        'img_size': 192,
+        'dims': [72,144,288],
+        'depth': [2,3,2],
         'drop_path_rate': 0,
         'mlp_ratio': 2,
         "act_layer": "GELU",
@@ -416,21 +428,21 @@ CFG_StarAttn_T1_64 = {
         "down_sample": 64
     }
 
-CFG_StarAttn_T2_64 = {
+CFG_StarAttn_T2d5_64 = {
         'img_size': 192,
-        'dims': [48,96,192,384],
-        'depth': [0,1,2,2],
+        'dims': [88,176,352],
+        'depth': [2,3,2],
         'drop_path_rate': 0,
         'mlp_ratio': 2,
         "act_layer": "GELU",
-        "learnable_wavelet": True,
+        "learnable_wavelet": False,
         "down_sample": 64
     }
 
 CFG_StarAttn_T3_64 = {
         'img_size': 192,
-        'dims': [60,120,240,480],
-        'depth': [0,1,2,2],
+        'dims': [104,208,416],
+        'depth': [2,3,2],
         'drop_path_rate': 0,
         'mlp_ratio': 2,
         "act_layer": "GELU",
@@ -445,9 +457,77 @@ CFG_StarAttn_T4_64 = {
         'drop_path_rate': 0,
         'mlp_ratio': 2,
         "act_layer": "GELU",
+        "learnable_wavelet": False,
+        "down_sample": 64
+    }
+
+CFG_StarAttn_T5_64 = {
+        'img_size': 256,
+        'dims': [128,256,512],
+        'depth': [3,4,3],
+        'drop_path_rate': 0,
+        'mlp_ratio': 2,
+        "act_layer": "GELU",
         "learnable_wavelet": True,
         "down_sample": 64
     }
+
+CFG_StarAttn_T6_64 = {
+        'img_size': 256,
+        'dims': [160,320,640],
+        'depth': [3,4,3],
+        'drop_path_rate': 0,
+        'mlp_ratio': 2,
+        "act_layer": "GELU",
+        "learnable_wavelet": True,
+        "down_sample": 64
+    }
+
+
+CFG_StarAttn_T8_64 = {
+        'img_size': 256,
+        'dims': [96,192,384,640],
+        'depth': [2,3,4,5],
+        'drop_path_rate': 0,
+        'mlp_ratio': 2,
+        "act_layer": "GELU",
+        "learnable_wavelet": True,
+        "down_sample": 642
+    }
+
+# CFG_StarAttn_T8_64 = {
+#         'img_size': 256,
+#         'dims': [96,192,384,640],
+#         'depth': [1,2,8,2],
+#         'drop_path_rate': 0,
+#         'mlp_ratio': 2,
+#         "act_layer": "GELU",
+#         "learnable_wavelet": True,
+#         "down_sample": 32
+#     }
+
+# CFG_StarAttn_T6_64 = {
+#         'img_size': 256,
+#         'dims': [80,160,368,512],
+#         'depth': [1,3,4,3],
+#         'drop_path_rate': 0,
+#         'mlp_ratio': 2,
+#         "act_layer": "GELU",
+#         "learnable_wavelet": True,
+#         "down_sample": 642
+#     }
+
+
+# CFG_StarAttn_T6_64 = {
+#         'img_size': 256,
+#         'dims': [80,160,384,512],
+#         'depth': [1,2,4,5],
+#         'drop_path_rate': 0,
+#         'mlp_ratio': 2,
+#         "act_layer": "GELU",
+#         "learnable_wavelet": True,
+#         "down_sample": 642
+#     }
 
 
 # CFG_StarAttn_T4_64 = {
@@ -462,19 +542,19 @@ CFG_StarAttn_T4_64 = {
 #     }
 
 
-CFG_StarAttn_T6_64 = {
-        'img_size': 224,
-        'dims': [96,192,384,768],
-        'depth': [1,2,8,2],
-        'drop_path_rate': 0,
-        'mlp_ratio': 2,
-        "act_layer": "GELU",
-        "learnable_wavelet": True,
-        "down_sample": 64
-    }
+# CFG_StarAttn_T6_64 = {
+#         'img_size': 224,
+#         'dims': [96,192,384,768],
+#         'depth': [1,2,8,2],
+#         'drop_path_rate': 0,
+#         'mlp_ratio': 2,
+#         "act_layer": "GELU",
+#         "learnable_wavelet": True,
+#         "down_sample": 64
+#     }
 
 
-@MODEL.register_module
+#@MODEL.register_module
 #运算量：282.732M, 参数量：4.023M
 def FSANet_T2(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
@@ -500,26 +580,51 @@ def FSANet_T8(num_classes=1000, pretrained=False, distillation=False, fuse=False
 
 
 #@MODEL.register_module
-#运算量：75.580M, 参数量：2.359M
+#运算量：82.871M, 参数量：2.121M
 def FSANet_64_T1(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T1_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
 #@MODEL.register_module
-#运算量：130.654M, 参数量：4.023M
+#运算量：103.652M, 参数量：2.634M
 def FSANet_64_T2(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
 #@MODEL.register_module
-#运算量：200.668M, 参数量：6.125M
+#运算量：103.652M, 参数量：2.634M
+def FSANet_64_T2d5(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2d5_64):
+    model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
+    return model
+
+#@MODEL.register_module
+#运算量：209.937M, 参数量：5.235M
 def FSANet_64_T3(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T3_64):
+    model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
+    return model
+
+#@MODEL.register_module
+#运算量：297.404M, 参数量：7.698M
+def FSANet_64_T4(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4_64):
+    model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
+    return model
+
+#@MODEL.register_module
+#运算量：485.102M, 参数量：11.905M
+def FSANet_64_T5(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T5_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
 @MODEL.register_module
 #运算量：297.404M, 参数量：7.698M
-def FSANet_64_T4(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4_64):
+def FSANet_64_T6(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T6_64):
+    model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
+    return model
+
+
+#@MODEL.register_module
+#运算量：297.404M, 参数量：7.698M
+def FSANet_64_T8(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T8_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
@@ -549,10 +654,10 @@ if __name__ == "__main__":
     # print(y.shape)
     # print("Model and input are on GPU:", next(model.parameters()).is_cuda)
     # model = StarNet_MHSA(dims=[40,80,160,320], depth=[3, 3, 12, 5], learnable_wavelet=True)
-    model = FSANet_64_T4()
+    model = FSANet_64_T6()
     model.eval()
     model.to("cuda")
-    x = torch.randn(1, 3, 256,256).to("cuda")
+    x = torch.randn(256, 3,256,256).to("cuda")
     # y = model(x)
     # print(y.shape)
 
