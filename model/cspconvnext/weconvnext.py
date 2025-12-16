@@ -237,7 +237,7 @@ class CSPConvNeXt(nn.Module):
     arch_settings = {
         'mini':  {'depths': [3,3,9,3], 'dims': [48,96,192,384,768], 'stem': 'va', 'stride': [1,2,2,2]},
         'tiny':  {'depths': [3,3,9,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
-        'small': {'depths': [3,3,27,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
+        'small': {'depths': [3,3,27,3], 'dims': [96,192,384,768,768], 'stem': 'vb', 'stride': [2,2,2,2]},
     }
 
     def __init__(self, arch='tiny', in_chans=3, drop_path_rate=0., class_num=1000,
@@ -311,6 +311,13 @@ def WTConvNeXt_tiny(num_classes=1000, pretrained=False, distillation=False, fuse
     model = CSPConvNeXt(arch='tiny', class_num=num_classes )
     return model
 
+@MODEL.register_module
+#运算量：82.871M, 参数量：2.121M
+def WTConvNeXt_small(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
+    model = CSPConvNeXt(arch='small', class_num=num_classes )
+    return model
+
+
 
 if __name__ == "__main__":
     from thop import profile
@@ -330,7 +337,7 @@ if __name__ == "__main__":
     # print(y.shape)
     # print("Model and input are on GPU:", next(model.parameters()).is_cuda)
     # model = StarNet_MHSA(dims=[40,80,160,320], depth=[3, 3, 12, 5], learnable_wavelet=True)
-    model = e_convnext_tiny_wt(class_num=1000)
+    model = e_convnext_small_wt(class_num=1000)
     model.eval()
     model.to("cuda")
     x = torch.randn(1, 3,224,224).to("cuda")

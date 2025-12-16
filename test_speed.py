@@ -71,9 +71,46 @@ def compute_throughput_cuda(name, model, device, batch_size, resolution=224):
 if __name__ == "__main__":
     for device in ["cuda:0",'cpu']:
 
+<<<<<<< HEAD
         if 'cuda' in device and not torch.cuda.is_available():
             print("no cuda")
             continue
+=======
+    if 'cuda' in device and not torch.cuda.is_available():
+        print("no cuda")
+        continue
+
+    if device == 'cpu':
+        os.system('echo -n "nb processors "; '
+                  'cat /proc/cpuinfo | grep ^processor | wc -l; '
+                  'cat /proc/cpuinfo | grep ^"model name" | tail -1')
+        print('Using 1 cpu thread')
+        torch.set_num_threads(1)
+        compute_throughput = compute_throughput_cpu
+    else:
+        print(torch.cuda.get_device_name(torch.cuda.current_device()))
+        compute_throughput = compute_throughput_cuda
+
+    for n, batch_size0, resolution in [
+        ('MobileMamba_T2', 2048, 192),
+        ('MobileMamba_T4', 2048, 192),
+        ('MobileMamba_S6', 2048, 224),
+        ('MobileMamba_B1', 2048, 256),
+        
+        ('FasterNet_T0',512,224),
+        ('FasterNet_T1',512,224),
+        ('FasterNet_T2',512,224),
+        ("starnet_s1", 1024, 224),
+        ("starnet_s2", 1024, 224),
+        ("starnet_s3", 1024, 224),
+        ("starnet_s4", 1024, 224),
+        ("FSANet_64_T1",512,256),
+        ("FSANet_64_T2",512,256),
+        ("FSANet_64_T3",512,256),
+        ("FSANet_64_T4",512,256),
+        ("FSANet_64_T5",512,256),
+    ]:
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 
         if device == 'cpu':
             os.system('echo -n "nb processors "; '
@@ -83,6 +120,7 @@ if __name__ == "__main__":
             torch.set_num_threads(1)
             compute_throughput = compute_throughput_cpu
         else:
+<<<<<<< HEAD
             print(torch.cuda.get_device_name(torch.cuda.current_device()))
             compute_throughput = compute_throughput_cuda
         
@@ -106,6 +144,21 @@ if __name__ == "__main__":
             # ("EfficientViT_M3",512,224),
             # ("EfficientViT_M4",512,224),
             # ("EfficientViT_M5",512,224),
+=======
+            batch_size = batch_size0
+            torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
+        inputs = torch.randn(batch_size, 3, resolution,
+                             resolution, device=device)
+        model = _Namespace()
+        model.name = n
+        model.model_kwargs = dict(pretrained=False, checkpoint_path='', ema=False, strict=True, num_classes=1000)
+        model = get_model(model)
+        model = fuse_model(model)
+        model.to(device)
+        # model.half()
+        model.eval()
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 
             # ('FSANet_64_T1',512,256),
             # ('FSANet_64_T2',512,256),

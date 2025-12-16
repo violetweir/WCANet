@@ -10,7 +10,11 @@ size = 256
 epoch_full = 300
 warmup_epochs = 20
 test_start_epoch = 200
+<<<<<<< HEAD
 batch_size = 256
+=======
+batch_size = 1024
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 lr = 1.5e-3
 min_lr = 0.5e-5
 warmup_lr = 0.5e-6
@@ -26,8 +30,13 @@ if ft:
 
 # =========> dataset <=================================
 data = _Namespace()
+<<<<<<< HEAD
 data.type = 'DefaultCLS'
 data.root = 'D:/ImageNet/Light_ILSVRC2012'
+=======
+data.type = 'ImageFolderLMDB'
+data.root = '/Data_8TB/lht/data/ILSVRC'
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 data.loader_type = 'pil'
 data.sampler = 'naive'
 data.nb_classes = nb_classes
@@ -56,8 +65,13 @@ optim.optim_kwargs = dict(name='adamw', betas=(0.9, 0.999), eps=1e-8, weight_dec
 # =========> trainer <=================================
 trainer = _Namespace()
 trainer.name = 'CLSTrainer'
+<<<<<<< HEAD
 trainer.checkpoint = 'runs/fsanet_64/fsanet_t4_64'
 trainer.resume_dir = ''
+=======
+trainer.checkpoint = 'runs/fsanet_64/fsanet_t1_64'
+trainer.resume_dir = 'CLSTrainer_FSANet_64_T1_ImageFolderLMDB_20251007-101744'
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 trainer.cuda_deterministic = False
 trainer.epoch_full = epoch_full
 trainer.scheduler_kwargs = dict(
@@ -70,7 +84,11 @@ trainer.data.batch_size = batch_size
 trainer.data.batch_size_per_gpu = None
 trainer.data.batch_size_test = None
 trainer.data.batch_size_per_gpu_test = 1024
+<<<<<<< HEAD
 trainer.data.num_workers_per_gpu = 8
+=======
+trainer.data.num_workers_per_gpu = 10
+>>>>>>> c4a3b66fce7248d3a719434fc3583b3c0f2e587b
 trainer.data.drop_last = True
 trainer.data.pin_memory = True
 trainer.data.persistent_workers = False
