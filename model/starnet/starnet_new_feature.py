@@ -235,12 +235,12 @@ class WTAttn(nn.Module):
 
         self.lh_conv = nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim)
         self.hl_conv = nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim)
-        if stage == 0:
-            self.ll_conv = nn.Conv2d(dim, dim, kernel_size=7, padding=3, groups=dim)
-        elif stage == 1:
-            self.ll_conv = nn.Conv2d(dim, dim, kernel_size=5, padding=2, groups=dim)
-        else :
-            self.ll_conv = nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim)
+        # if stage == 0:
+        self.ll_conv = nn.Conv2d(dim, dim, kernel_size=7, padding=3, groups=dim)
+        # elif stage == 1:
+        #     self.ll_conv = nn.Conv2d(dim, dim, kernel_size=5, padding=2, groups=dim)
+        # else :
+        #     self.ll_conv = nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim)
         # self.attn_weight_linear = Conv2d_BN(dim,dim,ks=1)
         # self.attn_linear = Conv2d_BN(dim,dim,ks=1)
         self.act = nn.Hardsigmoid() # 或者使用 nn.Sigmoid()

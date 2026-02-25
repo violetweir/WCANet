@@ -80,9 +80,9 @@ class Block(nn.Module):
         groups = dim if if_group == 1 else 1
         self.dwconv = nn.Conv2d(dim, dim, kernel_size=kernel_size, padding=kernel_size // 2, groups=groups)
         self.norm = nn.BatchNorm2d(dim)
-        self.pwconv1 = nn.Conv2d(dim, 2 * dim, kernel_size=1)
+        self.pwconv1 = nn.Conv2d(dim, 4 * dim, kernel_size=1)
         self.act = nn.GELU()
-        self.pwconv2 = nn.Conv2d(2 * dim, dim, kernel_size=1)
+        self.pwconv2 = nn.Conv2d(4 * dim, dim, kernel_size=1)
         self.norm2 = nn.BatchNorm2d(dim)
         self.ese = EffectiveSELayer(dim)
 
@@ -254,7 +254,7 @@ class CSPConvNeXt(nn.Module):
             self.Down_Conv = nn.Sequential(
                 ConvBNLayer(in_chans, dims[0] // 2, filter_size=2, stride=2, padding=0, act=act),
                 ConvBNLayer(dims[0] // 2, dims[0] // 2, filter_size=3, stride=1, padding=1, act=act),
-                ConvBNLayer(dims[0] // 2, dims[0], filter_size=3, stride=2, padding=1, act=act),
+                ConvBNLayer(dims[0] // 2, dims[0], filter_size=3, stride=1, padding=1, act=act),
             )
 
         # Stochastic depth
@@ -314,6 +314,14 @@ def e_convnext_tiny(**kwargs):
 
 def e_convnext_small(**kwargs):
     return CSPConvNeXt(arch='small', **kwargs)
+
+
+
+@MODEL.register_module
+#运算量：82.871M, 参数量：2.121M
+def CSPConvNeXt_mini(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
+    model = CSPConvNeXt(arch='mini', class_num=num_classes )
+    return model
 
 
 @MODEL.register_module

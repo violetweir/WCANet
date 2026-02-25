@@ -591,7 +591,7 @@ def FSANet_64_T2(num_classes=1000, pretrained=False, distillation=False, fuse=Fa
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 #运算量：103.652M, 参数量：2.634M
 def FSANet_64_T2d5(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T2d5_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
@@ -603,7 +603,7 @@ def FSANet_64_T3(num_classes=1000, pretrained=False, distillation=False, fuse=Fa
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 #运算量：297.404M, 参数量：7.698M
 def FSANet_64_T4(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T4_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)
@@ -622,7 +622,7 @@ def FSANet_64_T6(num_classes=1000, pretrained=False, distillation=False, fuse=Fa
     return model
 
 
-#@MODEL.register_module
+@MODEL.register_module
 #运算量：297.404M, 参数量：7.698M
 def FSANet_64_T8(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=CFG_StarAttn_T8_64):
     model = FSANet(num_classes=num_classes, distillation=distillation, **model_cfg)

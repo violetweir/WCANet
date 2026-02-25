@@ -26,7 +26,7 @@ if ft:
 # =========> dataset <=================================
 data = _Namespace()
 data.type = 'DefaultCLS'
-data.root = 'D:/ImageNet/Light_ILSVRC2012'
+data.root = '~/FSANet/Light_ILSVRC2012'
 data.loader_type = 'pil'
 data.sampler = 'naive'
 data.nb_classes = nb_classes
@@ -55,7 +55,7 @@ optim.optim_kwargs = dict(name='adamw', betas=(0.9, 0.999), eps=1e-8, weight_dec
 # =========> trainer <=================================
 trainer = _Namespace()
 trainer.name = 'CLSTrainer'
-trainer.checkpoint = 'runs/imageNet/CSPConvNeXt/WTConvNeXt_small_64_out_4'
+trainer.checkpoint = 'runs/WTConvNeXt_small_64_out_4'
 trainer.resume_dir = 'CLSTrainer_WTConvNeXt_small_DefaultCLS_20251211-214550'
 trainer.cuda_deterministic = False
 trainer.epoch_full = epoch_full
@@ -68,7 +68,7 @@ trainer.data = _Namespace()
 trainer.data.batch_size = batch_size
 trainer.data.batch_size_per_gpu = None
 trainer.data.batch_size_test = None
-trainer.data.batch_size_per_gpu_test = 512
+trainer.data.batch_size_per_gpu_test = 256
 trainer.data.num_workers_per_gpu = 10
 trainer.data.drop_last = True
 trainer.data.pin_memory = True

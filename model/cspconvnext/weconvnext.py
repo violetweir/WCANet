@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pywt
 from typing import List
-from model import MODEL
+from fast_wtconv.wtconv_triton import WTConv2d as WTConv2dTriton
+#from model import MODEL
 
 
 # ========== 工具函数（小波滤波器）==========
@@ -185,7 +186,8 @@ class ConvBNLayer(nn.Module):
 class Block(nn.Module):
     def __init__(self, dim, wt_levels=1, kernel_size=5, drop_path=0., wt_type='db1'):
         super().__init__()
-        self.wt_conv = WTConv2d(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels, wt_type=wt_type)
+        # self.wt_conv = WTConv2d(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels, wt_type=wt_type)
+        self.wt_conv = WTConv2dTriton(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels).cuda()
         self.norm = nn.BatchNorm2d(dim)
         self.pwconv1 = nn.Conv2d(dim, 2 * dim, 1)
         self.act = nn.GELU()
@@ -234,10 +236,15 @@ class CSPStage(nn.Module):
 
 # ========== 主干模型 ==========
 class CSPConvNeXt(nn.Module):
+    # arch_settings = {
+    #     'mini':  {'depths': [3,3,9,3], 'dims': [48,96,192,384,768], 'stem': 'va', 'stride': [1,2,2,2]},
+    #     'tiny':  {'depths': [3,3,9,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
+    #     'small': {'depths': [3,3,27,3], 'dims': [96,192,384,768,768], 'stem': 'vb', 'stride': [2,2,2,2]},
+    # }
     arch_settings = {
         'mini':  {'depths': [3,3,9,3], 'dims': [48,96,192,384,768], 'stem': 'va', 'stride': [1,2,2,2]},
-        'tiny':  {'depths': [3,3,9,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
-        'small': {'depths': [3,3,27,3], 'dims': [96,192,384,768,768], 'stem': 'vb', 'stride': [2,2,2,2]},
+        'tiny':  {'depths': [0,2,3,2], 'dims': [32,64,128,384,448], 'stem': 'vb', 'stride': [2,2,2,2]},
+        'small': {'depths': [3,3,27,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
     }
 
     def __init__(self, arch='tiny', in_chans=3, drop_path_rate=0., class_num=1000,
@@ -262,7 +269,7 @@ class CSPConvNeXt(nn.Module):
             )
 
         # Stages with WT levels: [5,4,3,2]
-        wt_levels_list = [5, 4, 3, 2]
+        wt_levels_list = [5,4,3,2]
         dp_rates = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
         stages = []
         for i in range(4):
@@ -291,6 +298,7 @@ class CSPConvNeXt(nn.Module):
         x = self.Down_Conv(x)
         for stage in self.stages:
             x = stage(x)
+        print(x.shape)
         x = x.mean([-2, -1])  # global avg pool
         return self.head(x)
 
@@ -305,13 +313,13 @@ def e_convnext_tiny_wt(**kwargs):
 def e_convnext_small_wt(**kwargs):
     return CSPConvNeXt(arch='small', **kwargs)
 
-@MODEL.register_module
+#@MODEL.register_module
 #运算量：82.871M, 参数量：2.121M
 def WTConvNeXt_tiny(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
     model = CSPConvNeXt(arch='tiny', class_num=num_classes )
     return model
 
-@MODEL.register_module
+#@MODEL.register_module
 #运算量：82.871M, 参数量：2.121M
 def WTConvNeXt_small(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
     model = CSPConvNeXt(arch='small', class_num=num_classes )
@@ -337,7 +345,7 @@ if __name__ == "__main__":
     # print(y.shape)
     # print("Model and input are on GPU:", next(model.parameters()).is_cuda)
     # model = StarNet_MHSA(dims=[40,80,160,320], depth=[3, 3, 12, 5], learnable_wavelet=True)
-    model = e_convnext_small_wt(class_num=1000)
+    model = e_convnext_tiny_wt(class_num=1000)
     model.eval()
     model.to("cuda")
     x = torch.randn(1, 3,224,224).to("cuda")

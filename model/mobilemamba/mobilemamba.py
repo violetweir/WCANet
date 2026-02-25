@@ -559,6 +559,37 @@ def MobileMamba_B4(num_classes=1000, pretrained=False, distillation=False, fuse=
     return model
 
 
+
+class MobileMambaForERF(torch.nn.Module):
+    """
+    Wrapper of MobileMamba for ERF analysis.
+    - Removes classification head and global pooling.
+    - Returns the final feature map before pooling.
+    - Supports arbitrary input resolution (e.g., 1024x1024).
+    """
+
+    def __init__(self, model_cfg, num_classes=1000, distillation=False):
+        super().__init__()
+        # Build original MobileMamba backbone without head interference
+        self.backbone = MobileMamba(
+            num_classes=num_classes,
+            distillation=distillation,
+            **model_cfg
+        )
+        # Remove the classification head — we only need features
+        self.backbone.head = torch.nn.Identity()
+        if hasattr(self.backbone, 'head_dist'):
+            self.backbone.head_dist = torch.nn.Identity()
+
+    def forward(self, x):
+        # Patch embedding
+        x = self.backbone.patch_embed(x)
+        x = self.backbone.blocks1(x)
+        x = self.backbone.blocks2(x)
+        x = self.backbone.blocks3(x)
+        # DO NOT apply adaptive_avg_pool2d or head
+        return x  # [B, C, H, W]
+
 if __name__ == "__main__":
     from fvcore.nn import FlopCountAnalysis, flop_count_table, parameter_count
     from util.util import FLOPs, Throughput, get_val_dataloader
