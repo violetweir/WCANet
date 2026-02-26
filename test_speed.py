@@ -138,15 +138,15 @@ if __name__ == "__main__":
             # ('FSANet_64_T4',512,256),
             # ('FSANet_64_T5',512,256),
             # ('FSANet_64_T8',1024,256),
-            # ('WTConvNeXt_tiny',1024,224),
+            ('WTConvNeXt_tiny',1024,224),
             # ('CSPConvNeXt_mini',1024,224),
             # ('CSPConvNeXt_tiny',1024,224),
             # ('FSANet_64_T4',1024,256),
             # ('WTConvNeXt_tiny',1024,224),
-            ("FSANet_64_T2d5",1024,256),
+            # ("FSANet_64_T2d5",1024,256),
             # ("FSANet_64_T3",512,256),
-            ("FSANet_64_T4",1024,256),
-            ("FSANet_CSP_T4",1024,256),
+            ("FSANet_64_T5",1024,256),
+            # ("FSANet_CSP_T4",1024,256),
             # ("FSANet_64_T5",512,256),
             # ('FasterNet_T0',512,224),
             # ("FSANet_64_T1",512,256),
@@ -181,6 +181,6 @@ if __name__ == "__main__":
             # model.half()
             model.eval()
 
-            model = torch.jit.trace(model, inputs)
+            #model = torch.jit.trace(model, inputs)
             compute_throughput(n, model, device,
                             batch_size, resolution=resolution)

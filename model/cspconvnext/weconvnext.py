@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pywt
 from typing import List
-from fast_wtconv.wtconv_triton import WTConv2d as WTConv2dTriton
-#from model import MODEL
+# from fast_wtconv.wtconv_triton import WTConv2d as WTConv2dTriton
+from model.cspconvnext.fast_wtconv.wtconv import WTConv2d
+from model import MODEL
 
 
 # ========== 工具函数（小波滤波器）==========
@@ -56,66 +57,66 @@ class _ScaleModule(nn.Module):
         return self.weight * x
 
 
-class WTConv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=5, stride=1, bias=True, wt_levels=1, wt_type='db1'):
-        super().__init__()
-        assert in_channels == out_channels
-        self.in_channels = in_channels
-        self.wt_levels = wt_levels
-        self.stride = stride
+#class WTConv2d(nn.Module):
+    # def __init__(self, in_channels, out_channels, kernel_size=5, stride=1, bias=True, wt_levels=1, wt_type='db1'):
+    #     super().__init__()
+    #     assert in_channels == out_channels
+    #     self.in_channels = in_channels
+    #     self.wt_levels = wt_levels
+    #     self.stride = stride
 
-        dec_filter, rec_filter = create_2d_wavelet_filter(wt_type, in_channels, in_channels, torch.float)
-        self.wt_filter = nn.Parameter(dec_filter, requires_grad=False)
-        self.iwt_filter = nn.Parameter(rec_filter, requires_grad=False)
+    #     dec_filter, rec_filter = create_2d_wavelet_filter(wt_type, in_channels, in_channels, torch.float)
+    #     self.wt_filter = nn.Parameter(dec_filter, requires_grad=False)
+    #     self.iwt_filter = nn.Parameter(rec_filter, requires_grad=False)
 
-        self.base_conv = nn.Conv2d(in_channels, in_channels, kernel_size, padding='same', 
-                                   groups=in_channels, bias=bias)
-        self.base_scale = _ScaleModule([1, in_channels, 1, 1])
+    #     self.base_conv = nn.Conv2d(in_channels, in_channels, kernel_size, padding='same', 
+    #                                groups=in_channels, bias=bias)
+    #     self.base_scale = _ScaleModule([1, in_channels, 1, 1])
 
-        self.wavelet_convs = nn.ModuleList([
-            nn.Conv2d(in_channels * 4, in_channels * 4, kernel_size, padding='same',
-                      groups=in_channels * 4, bias=False) for _ in range(wt_levels)
-        ])
-        self.wavelet_scale = nn.ModuleList([
-            _ScaleModule([1, in_channels * 4, 1, 1], init_scale=0.1) for _ in range(wt_levels)
-        ])
+    #     self.wavelet_convs = nn.ModuleList([
+    #         nn.Conv2d(in_channels * 4, in_channels * 4, kernel_size, padding='same',
+    #                   groups=in_channels * 4, bias=False) for _ in range(wt_levels)
+    #     ])
+    #     self.wavelet_scale = nn.ModuleList([
+    #         _ScaleModule([1, in_channels * 4, 1, 1], init_scale=0.1) for _ in range(wt_levels)
+    #     ])
 
-        self.do_stride = nn.AvgPool2d(kernel_size=1, stride=stride) if stride > 1 else None
+    #     self.do_stride = nn.AvgPool2d(kernel_size=1, stride=stride) if stride > 1 else None
 
-    def forward(self, x):
-        x_ll_in_levels = []
-        x_h_in_levels = []
-        shapes_in_levels = []
-        curr_x_ll = x
+    # def forward(self, x):
+    #     x_ll_in_levels = []
+    #     x_h_in_levels = []
+    #     shapes_in_levels = []
+    #     curr_x_ll = x
 
-        for i in range(self.wt_levels):
-            curr_shape = curr_x_ll.shape
-            shapes_in_levels.append(curr_shape)
-            if (curr_shape[2] % 2) or (curr_shape[3] % 2):
-                curr_x_ll = F.pad(curr_x_ll, (0, curr_shape[3] % 2, 0, curr_shape[2] % 2))
-            curr_x = wavelet_2d_transform(curr_x_ll, self.wt_filter)
-            curr_x_ll = curr_x[:, :, 0, :, :]
-            shape_x = curr_x.shape
-            curr_x_tag = curr_x.reshape(shape_x[0], shape_x[1] * 4, shape_x[3], shape_x[4])
-            curr_x_tag = self.wavelet_scale[i](self.wavelet_convs[i](curr_x_tag))
-            curr_x_tag = curr_x_tag.reshape(shape_x)
-            x_ll_in_levels.append(curr_x_tag[:, :, 0, :, :])
-            x_h_in_levels.append(curr_x_tag[:, :, 1:4, :, :])
+    #     for i in range(self.wt_levels):
+    #         curr_shape = curr_x_ll.shape
+    #         shapes_in_levels.append(curr_shape)
+    #         if (curr_shape[2] % 2) or (curr_shape[3] % 2):
+    #             curr_x_ll = F.pad(curr_x_ll, (0, curr_shape[3] % 2, 0, curr_shape[2] % 2))
+    #         curr_x = wavelet_2d_transform(curr_x_ll, self.wt_filter)
+    #         curr_x_ll = curr_x[:, :, 0, :, :]
+    #         shape_x = curr_x.shape
+    #         curr_x_tag = curr_x.reshape(shape_x[0], shape_x[1] * 4, shape_x[3], shape_x[4])
+    #         curr_x_tag = self.wavelet_scale[i](self.wavelet_convs[i](curr_x_tag))
+    #         curr_x_tag = curr_x_tag.reshape(shape_x)
+    #         x_ll_in_levels.append(curr_x_tag[:, :, 0, :, :])
+    #         x_h_in_levels.append(curr_x_tag[:, :, 1:4, :, :])
 
-        next_x_ll = 0
-        for i in range(self.wt_levels - 1, -1, -1):
-            curr_x_ll = x_ll_in_levels.pop() + next_x_ll
-            curr_x_h = x_h_in_levels.pop()
-            curr_shape = shapes_in_levels.pop()
-            curr_x = torch.cat([curr_x_ll.unsqueeze(2), curr_x_h], dim=2)
-            next_x_ll = inverse_2d_wavelet_transform(curr_x, self.iwt_filter)
-            next_x_ll = next_x_ll[:, :, :curr_shape[2], :curr_shape[3]]
+    #     next_x_ll = 0
+    #     for i in range(self.wt_levels - 1, -1, -1):
+    #         curr_x_ll = x_ll_in_levels.pop() + next_x_ll
+    #         curr_x_h = x_h_in_levels.pop()
+    #         curr_shape = shapes_in_levels.pop()
+    #         curr_x = torch.cat([curr_x_ll.unsqueeze(2), curr_x_h], dim=2)
+    #         next_x_ll = inverse_2d_wavelet_transform(curr_x, self.iwt_filter)
+    #         next_x_ll = next_x_ll[:, :, :curr_shape[2], :curr_shape[3]]
 
-        x_tag = next_x_ll
-        x = self.base_scale(self.base_conv(x)) + x_tag
-        if self.do_stride is not None:
-            x = self.do_stride(x)
-        return x
+    #     x_tag = next_x_ll
+    #     x = self.base_scale(self.base_conv(x)) + x_tag
+    #     if self.do_stride is not None:
+    #         x = self.do_stride(x)
+    #     return x
 
 
 
@@ -187,7 +188,8 @@ class Block(nn.Module):
     def __init__(self, dim, wt_levels=1, kernel_size=5, drop_path=0., wt_type='db1'):
         super().__init__()
         # self.wt_conv = WTConv2d(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels, wt_type=wt_type)
-        self.wt_conv = WTConv2dTriton(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels).cuda()
+        # self.wt_conv = WTConv2dTriton(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels)
+        self.wt_conv = WTConv2d(dim, dim, kernel_size=kernel_size, wt_levels=wt_levels).to("cuda")
         self.norm = nn.BatchNorm2d(dim)
         self.pwconv1 = nn.Conv2d(dim, 2 * dim, 1)
         self.act = nn.GELU()
@@ -243,7 +245,7 @@ class CSPConvNeXt(nn.Module):
     # }
     arch_settings = {
         'mini':  {'depths': [3,3,9,3], 'dims': [48,96,192,384,768], 'stem': 'va', 'stride': [1,2,2,2]},
-        'tiny':  {'depths': [0,2,3,2], 'dims': [32,64,128,384,448], 'stem': 'vb', 'stride': [2,2,2,2]},
+        'tiny':  {'depths': [3,3,9,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
         'small': {'depths': [3,3,27,3], 'dims': [64,128,256,512,1024], 'stem': 'vb', 'stride': [2,2,2,2]},
     }
 
@@ -298,7 +300,6 @@ class CSPConvNeXt(nn.Module):
         x = self.Down_Conv(x)
         for stage in self.stages:
             x = stage(x)
-        print(x.shape)
         x = x.mean([-2, -1])  # global avg pool
         return self.head(x)
 
@@ -313,13 +314,13 @@ def e_convnext_tiny_wt(**kwargs):
 def e_convnext_small_wt(**kwargs):
     return CSPConvNeXt(arch='small', **kwargs)
 
-#@MODEL.register_module
+@MODEL.register_module
 #运算量：82.871M, 参数量：2.121M
 def WTConvNeXt_tiny(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
     model = CSPConvNeXt(arch='tiny', class_num=num_classes )
     return model
 
-#@MODEL.register_module
+@MODEL.register_module
 #运算量：82.871M, 参数量：2.121M
 def WTConvNeXt_small(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None):
     model = CSPConvNeXt(arch='small', class_num=num_classes )
@@ -345,7 +346,7 @@ if __name__ == "__main__":
     # print(y.shape)
     # print("Model and input are on GPU:", next(model.parameters()).is_cuda)
     # model = StarNet_MHSA(dims=[40,80,160,320], depth=[3, 3, 12, 5], learnable_wavelet=True)
-    model = e_convnext_tiny_wt(class_num=1000)
+    model = WTConvNeXt_tiny()
     model.eval()
     model.to("cuda")
     x = torch.randn(1, 3,224,224).to("cuda")
